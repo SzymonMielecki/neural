@@ -1,33 +1,33 @@
 use rand::Rng;
-use std::f64::consts::E;
+use std::f32::consts::E;
 
-fn sigmoid(x: f64) -> f64 {
+fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + E.powf(-x))
 }
 
-fn derivsigmoid(x: f64) -> f64 {
+fn derivsigmoid(x: f32) -> f32 {
     sigmoid(x) * (1.0 - sigmoid(x))
 }
 
 pub struct Data {
-    x: f64,
-    y: f64,
-    out: f64,
+    x: f32,
+    y: f32,
+    out: f32,
 }
 
 impl Data {
     pub fn new(x: i32, y: i32, out: i32) -> Data {
         Data {
-            x: x as f64,
-            y: y as f64,
-            out: out as f64,
+            x: x as f32,
+            y: y as f32,
+            out: out as f32,
         }
     }
 }
 
 pub struct NN {
-    weights: [f64; 6],
-    biases: [f64; 3],
+    weights: [f32; 6],
+    biases: [f32; 3],
 }
 
 impl NN {
@@ -46,13 +46,13 @@ impl NN {
         }
     }
 
-    pub fn feed_forward(&self, x: Vec<f64>) -> f64 {
+    pub fn feed_forward(&self, x: Vec<f32>) -> f32 {
         let h1 = sigmoid(self.weights[0] * x[0] + self.weights[1] * x[1] + self.biases[0]);
         let h2 = sigmoid(self.weights[2] * x[0] + self.weights[3] * x[1] + self.biases[1]);
         sigmoid(self.weights[4] * h1 + self.weights[5] * h2 + self.biases[2])
     }
 
-    pub fn train(&mut self, data: Vec<Data>, learn_rate: f64, epochs: i32) {
+    pub fn train(&mut self, data: Vec<Data>, learn_rate: f32, epochs: i32) {
         let start = std::time::Instant::now();
         for _ in 0..epochs {
             for (data_slice) in data.iter() {
@@ -105,8 +105,8 @@ impl NN {
         let elapsed = start.elapsed();
         println!("Done in {} ms", elapsed.as_millis());
     }
-    pub fn predict(&self, x: i32, y: i32) -> f64 {
-        let res = self.feed_forward(vec![x as f64, y as f64]);
+    pub fn predict(&self, x: i32, y: i32) -> f32 {
+        let res = self.feed_forward(vec![x as f32, y as f32]);
         println!("x: {}, y: {} -> {}", x, y, res);
         res
     }
