@@ -9,24 +9,15 @@ fn derivsigmoid(x: f64) -> f64 {
     sigmoid(x) * (1.0 - sigmoid(x))
 }
 
-pub struct DataIn {
-    pub x: f64,
-    pub y: f64,
-}
-
-impl DataIn {
-    pub fn new(x: f64, y: f64) -> DataIn {
-        DataIn { x, y }
-    }
-}
-
-pub struct DataOut {
+struct Data {
+    x: f64,
+    y: f64,
     out: f64,
 }
 
-impl DataOut {
-    pub fn new(out: f64) -> DataOut {
-        DataOut { out }
+impl Data {
+    pub fn new(x: f64, y: f64, out: f64) -> Data {
+        Data { x, y, out }
     }
 }
 
@@ -57,10 +48,10 @@ impl NN {
         sigmoid(self.weights[4] * h1 + self.weights[5] * h2 + self.biases[2])
     }
 
-    pub fn train(&mut self, data: Vec<DataIn>, y_pred: Vec<DataOut>, learn_rate: f64, epochs: i32) {
+    pub fn train(&mut self, data: Vec<Data>, learn_rate: f64, epochs: i32) {
         let start = std::time::Instant::now();
         for _ in 0..epochs {
-            for (data_slice, y_slice) in data.iter().zip(y_pred.iter()) {
+            for (data_slice) in data.iter() {
                 let sum_h1 = self.weights[0] * data_slice.x
                     + self.weights[1] * data_slice.y
                     + self.biases[0];
@@ -77,9 +68,7 @@ impl NN {
                 let o1 = sigmoid(sum_o1);
                 let o1_der = derivsigmoid(sum_o1);
 
-                let y_pred = o1;
-
-                let d_mse = -2.0 * (y_slice.out - y_pred);
+                let d_mse = -2.0 * (data_slice.out - o1);
 
                 let d_w5 = h1 * o1_der;
                 let d_w6 = h2 * o1_der;
