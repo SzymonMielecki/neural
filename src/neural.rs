@@ -26,15 +26,15 @@ impl Data {
 }
 
 pub struct NN {
-    weights: Vec<f64>,
-    biases: Vec<f64>,
+    weights: [f64; 6],
+    biases: [f64; 3],
 }
 
 impl NN {
     pub fn new() -> NN {
         let mut rng = rand::thread_rng();
         NN {
-            weights: vec![
+            weights: [
                 rng.gen(),
                 rng.gen(),
                 rng.gen(),
@@ -42,7 +42,7 @@ impl NN {
                 rng.gen(),
                 rng.gen(),
             ],
-            biases: vec![rng.gen(), rng.gen(), rng.gen()],
+            biases: [rng.gen(), rng.gen(), rng.gen()],
         }
     }
 
