@@ -1,5 +1,5 @@
 use rand::Rng;
-use std::f32::consts::E;
+use std::{cell::RefCell, f32::consts::E};
 
 fn sigmoid(x: f32) -> f32 {
     1.0 / (1.0 + E.powf(-x))
@@ -25,82 +25,47 @@ impl Data {
     }
 }
 
-pub struct NN {
-    conns: Conns,
-    neurons: Neurons,
+enum Module {
+    Primary {
+        input: f32,
+        conns: Vec<Conn>,
+        bias: f32,
+    },
+    Advanced {
+        conns: Vec<Conn>,
+        bias: f32,
+        inner: Vec<Module>,
+    },
+    Input {
+        input: f32,
+        conns: Vec<Conn>,
+    },
+    Output {},
 }
 
 struct Conn {
+    from: RefCell<Module>,
     weight: f32,
+    to: RefCell<Module>,
 }
 
 impl Conn {
-    pub fn new() -> Conn {
+    pub fn new(from: Module, to: Module) -> Conn {
         let mut rng = rand::thread_rng();
-        Conn { weight: rng.gen() }
-    }
-}
-
-struct Conns {
-    w0: Conn,
-    w2: Conn,
-    w1: Conn,
-    w3: Conn,
-    w4: Conn,
-    w5: Conn,
-}
-
-impl Conns {
-    pub fn new() -> Conns {
-        let mut rng = rand::thread_rng();
-        Conns {
-            w0: Conn::new(),
-            w2: Conn::new(),
-            w1: Conn::new(),
-            w3: Conn::new(),
-            w4: Conn::new(),
-            w5: Conn::new(),
+        Conn {
+            from: RefCell::new(from),
+            weight: rng.gen(),
+            to: RefCell::new(to),
         }
     }
 }
 
-struct Neuron {
-    bias: f32,
-}
-
-impl Neuron {
-    pub fn new() -> Neuron {
-        let mut rng = rand::thread_rng();
-        Neuron { bias: rng.gen() }
-    }
-}
-
-struct Neurons {
-    x0: Neuron,
-    x1: Neuron,
-    h0: Neuron,
-    h1: Neuron,
-    h2: Neuron,
-    o0: Neuron,
-}
-
-impl Neurons {
-    pub fn new() -> Neurons {
-        let mut rng = rand::thread_rng();
-        Neurons {
-            x0: Neuron::new(),
-            x1: Neuron::new(),
-            h0: Neuron::new(),
-            h1: Neuron::new(),
-            h2: Neuron::new(),
-            o0: Neuron::new(),
-        }
-    }
+pub struct NN {
+    module: Module,
 }
 
 impl NN {
     pub fn new() -> NN {
-        let mut rng = rand::thread_rng();
         NN {
             conns: Conns::new(),
             neurons: Neurons::new(),
@@ -118,7 +83,7 @@ impl NN {
     pub fn train(&mut self, data: Vec<Data>, learn_rate: f32, epochs: i32) {
         let start = std::time::Instant::now();
         for _ in 0..epochs {
-            for (data_slice) in data.iter() {
+            for data_slice in data.iter() {
                 let sum_h1 = self.conns.w0.weight * data_slice.x
                     + self.conns.w1.weight * data_slice.y
                     + self.neurons.h1.bias;
