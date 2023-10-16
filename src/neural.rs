@@ -35,6 +35,16 @@ struct OutputNeuron {
     data: f32,
     bias: f32,
 }
+pub struct Data {
+    pub x: f32,
+    pub y: f32,
+    pub out: f32,
+}
+
+pub struct Network {
+    output: OutputNeuron,
+    learning_rate: f32,
+}
 
 impl CalcNeuron {
     pub fn calc_val(&self) -> f32 {
@@ -56,16 +66,6 @@ impl CalcNeuron {
     }
     pub fn calc_bias(&self) -> f32 {
         derivsigmoid(self.data)
-    }
-    pub fn update_neuron_and_conns(&mut self, learning_rate: f32, y_pred: f32) {
-        self.data = self.calc_val();
-        self.bias = self.calc_bias();
-        self.in_conn.iter_mut().for_each(|conn| {
-            conn.weight -= learning_rate
-                * conn.in_neuron.data
-                * derivsigmoid(self.data)
-                * mse_loss(self.data, y_pred)
-        });
     }
 }
 
@@ -90,51 +90,45 @@ impl OutputNeuron {
     pub fn calc_bias(&self) -> f32 {
         derivsigmoid(self.data)
     }
-    pub fn update_neuron_and_conns(&mut self, learning_rate: f32, y_pred: f32) {
-        self.data = self.calc_val();
-        self.bias = self.calc_bias();
-        self.in_conn.iter_mut().for_each(|conn| {
-            conn.weight -= learning_rate
-                * conn.in_neuron.data
-                * derivsigmoid(self.data)
-                * mse_loss(self.data, y_pred)
-        });
+    pub fn calc_inc_delta(&self, y_pred: f32) -> Vec<f32> {
+        let mut res: Vec<f32> = Vec::with_capacity(self.in_conn.len());
+        self.in_conn
+            .iter()
+            .for_each(|conn| res.push(conn.weight * sigmoid(self.data)));
+        res
     }
 }
 
-pub struct Data {
-    pub x: f32,
-    pub y: f32,
-    pub out: f32,
-}
-
-pub struct Network {
-    output: OutputNeuron,
-    learning_rate: f32,
-}
 
 impl Network {
-    pub fn feed_forward(&mut self, y_pred: f32) {
-        self.output
-            .update_neuron_and_conns(self.learning_rate, y_pred);
-        for conn in &mut self.output.in_conn {
-            conn.in_neuron
-                .update_neuron_and_conns(self.learning_rate, y_pred);
-        }
-    }
-    pub fn train(&mut self, epochs: usize, data: Vec<Data>) {
-        for i in 0..=epochs {
-            for data_slice in &data {
-                self.feed_forward(data_slice.out);
-            }
-            if i % 1000 == 0 {
-                println!("Epoch: {}", i);
-                for data_slice in &data {
-                    println!("Input: {}, {}", data_slice.x, data_slice.y);
-                    println!("Prediction: {}", data_slice.out);
-                    println!("Output: {}", self.output.data);
-                }
-            }
+    // pub fn feed_forward(&mut self, y_pred: f32) {
+    //     self.update_neuron_and_conns(self.learning_rate, y_pred);
+    //     for conn in &mut self.output.in_conn {
+    //         conn.in_neuron
+    //             .update_neuron_and_conns(self.learning_rate, y_pred);
+    //     }
+    // }
+    // pub fn train(&mut self, epochs: usize, data: Vec<Data>) {
+    //     for i in 0..=epochs {
+    //         for data_slice in &data {
+    //             self.feed_forward(data_slice.out);
+    //         }
+    //         if i % 100 == 0 {
+    //             println!("Epoch: {}", i);
+    //             for data_slice in &data {
+    //                 println!("Input: {}, {}", data_slice.x, data_slice.y);
+    //                 println!("Prediction: {}", data_slice.out);
+    //                 println!("Output: {}", self.output.data);
+    //             }
+    //         }
+    //     }
+    // }
+    pub fn update_inc_neuron_and_conns(&mut self, learning_rate: f32, y_pred: f32) {
+        self.output.data = self.output.calc_val();
+        self.output.bias = self.output.calc_bias();
+        let weight_delta = self.output.calc_conn_weight_delta(y_pred);
+        for i in 0..self.output.in_conn.len() {
+            self.output.in_conn[i].weight -= learning_rate * weight_delta[i] *
         }
     }
 }
