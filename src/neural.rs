@@ -55,7 +55,7 @@ impl NN {
     pub fn train(&mut self, data: Vec<Data>, learn_rate: f32, epochs: i32) {
         let start = std::time::Instant::now();
         for _ in 0..epochs {
-            for (data_slice) in data.iter() {
+            for data_slice in data.iter() {
                 let sum_h1 = self.weights[0] * data_slice.x
                     + self.weights[1] * data_slice.y
                     + self.biases[0];
