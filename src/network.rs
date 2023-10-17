@@ -1,36 +1,49 @@
 use ndarray::{Array, Array1, Array2, Axis};
 use ndarray_rand::RandomExt;
+use neural::{Floater, Matrice};
+use num::Float;
 use rand::distributions::Uniform;
 
-pub struct Perceptron {
-    w1: Array2<f32>,
-    b1: Array2<f32>,
-    w2: Array2<f32>,
-    b2: Array2<f32>,
-    z1: Array2<f32>,
-    a1: Array2<f32>,
-    z2: Array2<f32>,
-    learning_rate: f32,
+// pub struct Perceptron {
+//     w1: Array2<f32>,
+//     b1: Array2<f32>,
+//     w2: Array2<f32>,
+//     b2: Array2<f32>,
+//     z1: Array2<f32>,
+//     a1: Array2<f32>,
+//     z2: Array2<f32>,
+//     learning_rate: f32,
+// }
+
+pub struct Perceptron<T: Floater, const INPUT: usize, const HIDDEN: usize> {
+    w1: Matrice<T, INPUT, HIDDEN>,
+    b1: Matrice<T, 1, HIDDEN>,
+    w2: Matrice<T, HIDDEN, 1>,
+    b2: Matrice<T, 1, 1>,
+    z1: Matrice<T, 1, HIDDEN>,
+    a1: Matrice<T, 1, HIDDEN>,
+    z2: Matrice<T, 1, 1>,
+    learning_rate: T,
 }
 
-impl Perceptron {
-    pub fn new(hidden_size: usize, learning_rate: f32) -> Self {
+impl<T: Floater, const INPUT: usize, const HIDDEN: usize> Perceptron<T, INPUT, HIDDEN> {
+    pub fn new(input_size: usize, hidden_size: usize, learning_rate: f32) -> Self {
         Perceptron {
-            w1: Array::random((2, hidden_size), Uniform::new(-1.0, 1.0)),
-            b1: Array::random((1, hidden_size), Uniform::new(-1.0, 1.0)),
-            w2: Array::random((hidden_size, 1), Uniform::new(-1.0, 1.0)),
-            b2: Array::random((1, 1), Uniform::new(-1.0, 1.0)),
-            z1: Array::zeros((1, hidden_size)),
-            a1: Array::zeros((1, hidden_size)),
-            z2: Array::zeros((1, 1)),
-            learning_rate,
+            w1: Matrice::random(),
+            b1: Matrice::random(),
+            w2: Matrice::random(),
+            b2: Matrice::random(),
+            z1: Matrice::zeros(),
+            a1: Matrice::zeros(),
+            z2: Matrice::zeros(),
+            learning_rate: T::from(learning_rate).unwrap(),
         }
     }
-    fn sigmoid(&self, x: f32) -> f32 {
+    fn sigmoid(&self, x: T) -> T {
         1.0 / (1.0 + (-x).exp())
     }
-    fn feed_forward(&mut self, x: &Array1<f32>) -> Array2<f32> {
-        self.z1 = x.dot(&self.w1) + &self.b1;
+    fn feed_forward(&mut self, x: &Matrice<T, HIDDEN, 1>) -> Array2<f32> {
+        self.z1 = x.dot(self.w1).add(&self.b1);
         self.a1 = self.z1.mapv(|x| self.sigmoid(x));
         self.z2 = self.a1.dot(&self.w2) + &self.b2;
         self.z2.mapv(|x| self.sigmoid(x))

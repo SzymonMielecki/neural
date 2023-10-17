@@ -1,17 +1,17 @@
-mod neural;
+mod network;
 use ndarray::array;
-use neural::Perceptron;
+use network::Perceptron;
 
 fn main() {
     let start = std::time::Instant::now();
-    let mut model = Perceptron::new(1, 0.1);
+    let mut model = Perceptron::new(2, 2, 0.1);
     let data = array![
         (array![0.0, 0.0], array![0.0]),
-        (array![0.0, 1.0], array![0.0]),
-        (array![1.0, 0.0], array![0.0]),
-        (array![1.0, 1.0], array![1.0]),
+        (array![0.0, 1.0], array![1.0]),
+        (array![1.0, 0.0], array![1.0]),
+        (array![1.0, 1.0], array![0.0]),
     ];
-    model.fit(data.clone(), 10000000, 0);
+    model.fit(data.clone(), 2000, 100);
 
     for (input, target) in data.into_iter() {
         let res = model.predict(input.clone());
