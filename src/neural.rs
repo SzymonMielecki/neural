@@ -1,4 +1,4 @@
-use rand::Rng;
+use ndarray::{arr2, Array1, Array2, Dim, Ix};
 use std::f32::consts::E;
 
 fn sigmoid(x: f32) -> f32 {
@@ -9,105 +9,34 @@ fn derivsigmoid(x: f32) -> f32 {
     sigmoid(x) * (1.0 - sigmoid(x))
 }
 
-pub struct Data {
-    x: f32,
-    y: f32,
-    out: f32,
+struct NN<T> {
+    input: Array1<T>,
+    hidden: Array2<T>,
+    output: Array1<T>,
 }
 
-impl Data {
-    pub fn new(x: i32, y: i32, out: i32) -> Data {
-        Data {
-            x: x as f32,
-            y: y as f32,
-            out: out as f32,
-        }
+struct Data<T> {
+    x: T,
+    y: T,
+    out: T,
+}
+
+impl Data<f32> {
+    pub fn new(x: f32, y: f32, out: f32) -> Self {
+        Data { x, y, out }
     }
 }
 
-pub struct NN {
-    weights: [f32; 6],
-    biases: [f32; 3],
-}
-
-impl NN {
-    pub fn new() -> NN {
-        let mut rng = rand::thread_rng();
+impl NN<f32> {
+    pub fn new(input_count: i32, hidden_count: i32, output_count: i32) -> Self {
+        let input = Array1::<f32>::zeros(input_count as usize);
+        let hidden = Array2::<f32>::zeros((hidden_count as usize, input_count as usize));
+        let output = Array1::<f32>::zeros(output_count as usize);
         NN {
-            weights: [
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-                rng.gen(),
-            ],
-            biases: [rng.gen(), rng.gen(), rng.gen()],
+            input,
+            hidden,
+            output,
         }
     }
-
-    pub fn feed_forward(&self, x: Vec<f32>) -> f32 {
-        let h1 = sigmoid(self.weights[0] * x[0] + self.weights[1] * x[1] + self.biases[0]);
-        let h2 = sigmoid(self.weights[2] * x[0] + self.weights[3] * x[1] + self.biases[1]);
-        sigmoid(self.weights[4] * h1 + self.weights[5] * h2 + self.biases[2])
-    }
-
-    pub fn train(&mut self, data: Vec<Data>, learn_rate: f32, epochs: i32) {
-        let start = std::time::Instant::now();
-        for _ in 0..epochs {
-            for data_slice in data.iter() {
-                let sum_h1 = self.weights[0] * data_slice.x
-                    + self.weights[1] * data_slice.y
-                    + self.biases[0];
-                let h1 = sigmoid(sum_h1);
-                let h1_der = derivsigmoid(sum_h1);
-
-                let sum_h2 = self.weights[2] * data_slice.x
-                    + self.weights[3] * data_slice.y
-                    + self.biases[1];
-                let h2 = sigmoid(sum_h2);
-                let h2_der = derivsigmoid(sum_h2);
-
-                let sum_o1 = self.weights[4] * h1 + self.weights[5] * h2 + self.biases[2];
-                let o1 = sigmoid(sum_o1);
-                let o1_der = derivsigmoid(sum_o1);
-
-                let d_mse = -2.0 * (data_slice.out - o1);
-
-                let d_w5 = h1 * o1_der;
-                let d_w6 = h2 * o1_der;
-                let d_b3 = o1_der;
-
-                let d_h1 = self.weights[4] * o1_der;
-                let d_h2 = self.weights[5] * o1_der;
-
-                let d_w1 = data_slice.x * h1_der;
-                let d_w2 = data_slice.y * h1_der;
-                let d_b1 = h1_der;
-
-                let d_w3 = data_slice.x * h2_der;
-                let d_w4 = data_slice.y * h2_der;
-                let d_b2 = h2_der;
-
-                self.weights[0] -= learn_rate * d_mse * d_h1 * d_w1;
-                self.weights[1] -= learn_rate * d_mse * d_h1 * d_w2;
-                self.biases[0] -= learn_rate * d_mse * d_h1 * d_b1;
-
-                self.weights[2] -= learn_rate * d_mse * d_h2 * d_w3;
-                self.weights[3] -= learn_rate * d_mse * d_h2 * d_w4;
-                self.biases[1] -= learn_rate * d_mse * d_h2 * d_b2;
-
-                self.weights[4] -= learn_rate * d_mse * d_w5;
-                self.weights[5] -= learn_rate * d_mse * d_w6;
-                self.biases[2] -= learn_rate * d_mse * d_b3;
-            }
-        }
-        let elapsed = start.elapsed();
-        println!("Done in {} ms", elapsed.as_millis());
-    }
-    pub fn predict(&self, x: i32, y: i32) -> f32 {
-        let res = self.feed_forward(vec![x as f32, y as f32]);
-        println!("x: {}, y: {} -> {}", x, y, res);
-        res
-    }
+    pub fn forward_propagate(&self, data: Vec<Data<f32>>) {}
 }
